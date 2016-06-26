@@ -1,5 +1,6 @@
 package com.hea3ven.idolscraper.ui
 
+import com.hea3ven.idolscraper.Config
 import com.hea3ven.idolscraper.imageenhancer.ImageEnhancerManager
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -28,6 +29,7 @@ class MainWindow : JFrame("Idol Scraper") {
 		dialogTitle = "Target destination"
 		fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
 		isAcceptAllFileFilterUsed = false
+		currentDirectory = Config.getDestinationDir()
 	}
 
 	init {
@@ -67,7 +69,7 @@ class MainWindow : JFrame("Idol Scraper") {
 		val destPnl = JPanel()
 		destPnl.layout = BoxLayout(destPnl, BoxLayout.X_AXIS)
 
-		val destTxt = JTextField()
+		val destTxt = JTextField(Config.getDestinationDir()?.absolutePath ?: "")
 		destPnl.add(destTxt)
 
 		val destBtn = JButton()
@@ -75,6 +77,7 @@ class MainWindow : JFrame("Idol Scraper") {
 			override fun actionPerformed(e: ActionEvent?) {
 				if (dirChooser.showOpenDialog(this@MainWindow) == JFileChooser.APPROVE_OPTION) {
 					destTxt.text = dirChooser.selectedFile.absolutePath
+					Config.setDestinationDir(dirChooser.selectedFile)
 				}
 			}
 		}
