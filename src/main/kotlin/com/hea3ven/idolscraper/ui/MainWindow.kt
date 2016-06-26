@@ -4,10 +4,7 @@ import com.hea3ven.idolscraper.Config
 import com.hea3ven.idolscraper.imageenhancer.ImageEnhancerManager
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import java.awt.BorderLayout
-import java.awt.Dimension
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
+import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.image.BufferedImage
 import java.net.MalformedURLException
@@ -93,9 +90,37 @@ class MainWindow : JFrame("Idol Scraper") {
 			weighty = 0.0
 		})
 
+		val fmtLbl = JLabel("Format:")
+		fmtLbl.border = EmptyBorder(0, 5, 6, 0)
+		add(fmtLbl, GridBagConstraints().apply {
+			gridy = 2
+			fill = GridBagConstraints.HORIZONTAL
+			weightx = 0.0
+			weighty = 0.0
+		})
+
+		val fmtCb = JComboBox(arrayOf("png", "jpg"))
+		fmtCb.preferredSize = Dimension(100, 22)
+		val fmtCbPnl = JPanel()
+		fmtCbPnl.layout = FlowLayout(FlowLayout.LEFT, 0, 0)
+		fmtCbPnl.add(fmtCb)
+		add(fmtCbPnl, GridBagConstraints().apply {
+			gridy = 2
+			gridx= 1
+			fill = GridBagConstraints.HORIZONTAL
+			weightx = 0.0
+			weighty = 0.0
+		})
+		fmtCb.selectedItem = Config.getFormat()
+		fmtCb.action =  object : AbstractAction() {
+			override fun actionPerformed(e: ActionEvent?) {
+				Config.setFormat(fmtCb.selectedItem as String?)
+			}
+		}
+
 		val padPnl = JPanel()
 		add(padPnl, GridBagConstraints().apply {
-			gridy = 2
+			gridy = 3
 			gridx = 1
 			fill = GridBagConstraints.HORIZONTAL
 			weightx = 1.0
@@ -107,7 +132,7 @@ class MainWindow : JFrame("Idol Scraper") {
 		scanBtnPnl.border = EmptyBorder(0, 5, 0, 5)
 		scanBtnPnl.add(scanBtn)
 		add(scanBtnPnl, GridBagConstraints().apply {
-			gridy = 2
+			gridy = 3
 			gridx = 2
 			fill = GridBagConstraints.NONE
 			weightx = 0.0
@@ -120,7 +145,7 @@ class MainWindow : JFrame("Idol Scraper") {
 		logPanelPnl.border = EmptyBorder(5, 5, 5, 5)
 		logPanelPnl.add(logPanel)
 		add(logPanelPnl, GridBagConstraints().apply {
-			gridy = 3
+			gridy = 4
 			gridx = 0
 			gridwidth = 3
 			fill = GridBagConstraints.BOTH
@@ -136,6 +161,8 @@ class MainWindow : JFrame("Idol Scraper") {
 					logPanel.text += "Invalid destination directory"
 					return
 				}
+
+				val format = fmtCb.selectedItem as String
 
 				var nextFileNo: Int = 0
 				Files.newDirectoryStream(destDir).use {
@@ -191,8 +218,8 @@ class MainWindow : JFrame("Idol Scraper") {
 							publish("        Too small, not saving")
 							return
 						}
-						val fileName = (nextFileNo++).toString().padStart(3, '0') + ".png"
-						ImageIO.write(img, "png", destDir.resolve(fileName).toFile())
+						val fileName = (nextFileNo++).toString().padStart(3, '0') + "." + format
+						ImageIO.write(img, format, destDir.resolve(fileName).toFile())
 						publish("        Saved as " + fileName)
 					}
 

@@ -11,11 +11,20 @@ object Config {
 	}
 
 	fun getDestinationDir(): File? {
-		val destDir = prefs.get("dest_dir", null)
-		return if (destDir != null) File(destDir) else null
+		val destDir = prefs.get("dest_dir", "")
+		return File(if (destDir != "") destDir else "")
 	}
 
 	fun setDestinationDir(file: File?) {
-		prefs.put("dest_dir", file?.absolutePath ?: null)
+		prefs.put("dest_dir", file?.absolutePath ?: "")
+	}
+
+	fun getFormat(): String? {
+		val format = prefs.get("format", "png")
+		return if (format != "") format else null
+	}
+
+	fun setFormat(format: String?) {
+		prefs.put("format", format ?: "")
 	}
 }
