@@ -7,6 +7,8 @@ import org.jsoup.nodes.Document
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.image.BufferedImage
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Files
@@ -16,10 +18,6 @@ import javax.swing.*
 import javax.swing.border.EmptyBorder
 
 class MainWindow : JFrame("Idol Scraper") {
-	private val urlTxt: JTextField
-
-	private val scanBtn: JButton
-
 	private val imgEnhancerMgr = ImageEnhancerManager()
 
 	private val dirChooser = JFileChooser().apply {
@@ -36,39 +34,12 @@ class MainWindow : JFrame("Idol Scraper") {
 		layout = GridBagLayout()
 
 		val urlLbl = JLabel("URL:")
-		urlLbl.border = EmptyBorder(6, 5, 6, 5)
-		add(urlLbl, GridBagConstraints().apply {
-			gridy = 0
-			fill = GridBagConstraints.HORIZONTAL
-			weightx = 0.0
-			weighty = 0.0
-		})
-
-		urlTxt = JTextField()
-		add(urlTxt, GridBagConstraints().apply {
-			gridy = 0
-			gridx = 1
-			gridwidth = 2
-			fill = GridBagConstraints.HORIZONTAL
-			weightx = 1.0
-			weighty = 0.0
-		})
+		urlLbl.border = EmptyBorder(0, 5, 0, 0)
+		val urlTxt = JTextField()
 
 		val destLbl = JLabel("Destination:")
-		destLbl.border = EmptyBorder(0, 5, 6, 5)
-		add(destLbl, GridBagConstraints().apply {
-			gridy = 1
-			fill = GridBagConstraints.HORIZONTAL
-			weightx = 0.0
-			weighty = 0.0
-		})
-
-		val destPnl = JPanel()
-		destPnl.layout = BoxLayout(destPnl, BoxLayout.X_AXIS)
-
+		destLbl.border = EmptyBorder(0, 5, 0, 0)
 		val destTxt = JTextField(Config.getDestinationDir()?.absolutePath ?: "")
-		destPnl.add(destTxt)
-
 		val destBtn = JButton()
 		destBtn.action = object : AbstractAction() {
 			override fun actionPerformed(e: ActionEvent?) {
@@ -79,90 +50,36 @@ class MainWindow : JFrame("Idol Scraper") {
 			}
 		}
 		destBtn.text = "..."
-		destPnl.add(destBtn)
 
-		add(destPnl, GridBagConstraints().apply {
-			gridy = 1
-			gridx = 1
-			gridwidth = 2
-			fill = GridBagConstraints.HORIZONTAL
-			weightx = 1.0
-			weighty = 0.0
-		})
-
-		val fmtLbl = JLabel("Format:")
-		fmtLbl.border = EmptyBorder(0, 5, 6, 0)
-		add(fmtLbl, GridBagConstraints().apply {
-			gridy = 2
-			fill = GridBagConstraints.HORIZONTAL
-			weightx = 0.0
-			weighty = 0.0
-		})
-
-		val fmtCb = JComboBox(arrayOf("png", "jpg"))
-		fmtCb.preferredSize = Dimension(100, 22)
-		val fmtCbPnl = JPanel()
-		fmtCbPnl.layout = FlowLayout(FlowLayout.LEFT, 0, 0)
-		fmtCbPnl.add(fmtCb)
-		add(fmtCbPnl, GridBagConstraints().apply {
-			gridy = 2
-			gridx= 1
-			fill = GridBagConstraints.HORIZONTAL
-			weightx = 0.0
-			weighty = 0.0
-		})
-		fmtCb.selectedItem = Config.getFormat()
-		fmtCb.action =  object : AbstractAction() {
+		val formatLbl = JLabel("Format:")
+		formatLbl.border = EmptyBorder(0, 5, 0, 0)
+		val formatCb = JComboBox(arrayOf("png", "jpg"))
+		formatCb.preferredSize = Dimension(100, 22)
+		formatCb.border = EmptyBorder(2, 2, 2, 5)
+		formatCb.selectedItem = Config.getFormat()
+		formatCb.action = object : AbstractAction() {
 			override fun actionPerformed(e: ActionEvent?) {
-				Config.setFormat(fmtCb.selectedItem as String?)
+				Config.setFormat(formatCb.selectedItem as String?)
 			}
 		}
 
-		val padPnl = JPanel()
-		add(padPnl, GridBagConstraints().apply {
-			gridy = 3
-			gridx = 1
-			fill = GridBagConstraints.HORIZONTAL
-			weightx = 1.0
-		})
+		val scanBtn = JButton()
+		scanBtn.preferredSize = Dimension(72, 22)
 
-		scanBtn = JButton()
-		scanBtn.preferredSize = Dimension(72, 24)
-		val scanBtnPnl = JPanel()
-		scanBtnPnl.border = EmptyBorder(0, 5, 0, 5)
-		scanBtnPnl.add(scanBtn)
-		add(scanBtnPnl, GridBagConstraints().apply {
-			gridy = 3
-			gridx = 2
-			fill = GridBagConstraints.NONE
-			weightx = 0.0
-			weighty = 0.0
-		})
-
-		val logPanel = JTextArea()
-		val logPanelPnl = JPanel()
-		logPanelPnl.layout = BorderLayout()
-		logPanelPnl.border = EmptyBorder(5, 5, 5, 5)
-		logPanelPnl.add(logPanel)
-		add(logPanelPnl, GridBagConstraints().apply {
-			gridy = 4
-			gridx = 0
-			gridwidth = 3
-			fill = GridBagConstraints.BOTH
-			weightx = 1.0
-			weighty = 1.0
-		})
+		val logTxtArea = JTextArea()
+		logTxtArea.isEditable = false
+		val logTxtAreaScrlPn = JScrollPane(logTxtArea)
 
 		scanBtn.action = object : AbstractAction() {
 
 			override fun actionPerformed(e: ActionEvent?) {
 				val destDir = Paths.get(destTxt.text)
 				if (destTxt.text.length == 0 || !Files.exists(destDir) || !Files.isDirectory(destDir)) {
-					logPanel.text += "Invalid destination directory"
+					logTxtArea.text += "Invalid destination directory"
 					return
 				}
 
-				val format = fmtCb.selectedItem as String
+				val format = formatCb.selectedItem as String
 
 				var nextFileNo: Int = 0
 				Files.newDirectoryStream(destDir).use {
@@ -176,22 +93,28 @@ class MainWindow : JFrame("Idol Scraper") {
 				}
 				val worker = object : SwingWorker<Any, String>() {
 					override fun doInBackground() {
-						publish("Downloading the page")
-						val doc: Document
 						try {
-							doc = Jsoup.connect(urlTxt.text).get()
-						} catch (e: IllegalArgumentException) {
-							publish("Invalid url")
-							return
+							publish("Downloading the page")
+							val doc: Document
+							try {
+								doc = Jsoup.connect(urlTxt.text).get()
+							} catch (e: IllegalArgumentException) {
+								publish("Invalid url")
+								return
+							}
+							doc.select("img")
+									.map { it.attr("src") }
+									.filter { it != null && it.trim().length > 0 }
+									.map { imgEnhancerMgr.enhance(it) }
+									.forEach {
+										downloadImage(it)
+									}
+							publish("Done")
+						} catch(e: Exception) {
+							val ss = StringWriter()
+							e.printStackTrace(PrintWriter(ss))
+							publish("Unknown error: " + ss.toString())
 						}
-						doc.select("img")
-								.map { it.attr("src") }
-								.filter { it != null && it.trim().length > 0 }
-								.map { imgEnhancerMgr.enhance(it) }
-								.forEach {
-									downloadImage(it)
-								}
-						publish("Done")
 						return
 					}
 
@@ -208,6 +131,10 @@ class MainWindow : JFrame("Idol Scraper") {
 						val img: BufferedImage?
 						try {
 							img = ImageIO.read(url)
+							if (img == null) {
+								publish("        Error: unable to download")
+								return
+							}
 						} catch(e: Exception) {
 							publish("        Error: " + e.toString())
 							return
@@ -224,7 +151,11 @@ class MainWindow : JFrame("Idol Scraper") {
 					}
 
 					override fun process(chunks: MutableList<String>) {
-						chunks.forEach { logPanel.text += it + "\n" }
+						val vertScroll = logTxtAreaScrlPn.verticalScrollBar
+						val doScroll = vertScroll.value == vertScroll.maximum
+						chunks.forEach { logTxtArea.text += it + "\n" }
+						if (doScroll)
+							vertScroll.value = vertScroll.maximum
 					}
 
 					override fun done() {
@@ -238,7 +169,97 @@ class MainWindow : JFrame("Idol Scraper") {
 			}
 		}
 		scanBtn.text = "Scan"
-	}
 
+		add(urlLbl, GridBagConstraints().apply {
+			gridy = 0
+			fill = GridBagConstraints.HORIZONTAL
+			weightx = 0.0
+			weighty = 0.0
+		})
+
+		add(JPanel().apply {
+			border = EmptyBorder(5, 2, 2, 5)
+			layout = BorderLayout()
+			add(urlTxt, BorderLayout.CENTER)
+		}, GridBagConstraints().apply {
+			gridy = 0
+			gridx = 1
+			gridwidth = 2
+			fill = GridBagConstraints.HORIZONTAL
+			weightx = 1.0
+			weighty = 0.0
+		})
+		add(destLbl, GridBagConstraints().apply {
+			gridy = 1
+			fill = GridBagConstraints.HORIZONTAL
+			weightx = 0.0
+			weighty = 0.0
+		})
+
+		add(JPanel().apply {
+			layout = GridBagLayout()
+			border = EmptyBorder(2, 2, 2, 5)
+			add(destTxt, GridBagConstraints().apply {
+				weightx = 1.0
+				fill = GridBagConstraints.HORIZONTAL
+			})
+			add(destBtn, GridBagConstraints().apply {
+				weightx = 0.0
+			})
+		}, GridBagConstraints().apply {
+			gridy = 1
+			gridx = 1
+			gridwidth = 2
+			fill = GridBagConstraints.HORIZONTAL
+			weightx = 1.0
+			weighty = 0.0
+		})
+		add(formatLbl, GridBagConstraints().apply {
+			gridy = 2
+			fill = GridBagConstraints.HORIZONTAL
+			weightx = 0.0
+			weighty = 0.0
+		})
+		add(JPanel().apply {
+			layout = FlowLayout(FlowLayout.LEFT, 0, 0)
+			add(formatCb)
+		}, GridBagConstraints().apply {
+			gridy = 2
+			gridx = 1
+			fill = GridBagConstraints.HORIZONTAL
+			weightx = 0.0
+			weighty = 0.0
+		})
+
+		add(JPanel(), GridBagConstraints().apply {
+			gridy = 3
+			gridx = 1
+			fill = GridBagConstraints.HORIZONTAL
+			weightx = 1.0
+		})
+
+		add(JPanel().apply {
+			add(scanBtn)
+		}, GridBagConstraints().apply {
+			gridy = 3
+			gridx = 2
+			fill = GridBagConstraints.NONE
+			weightx = 0.0
+			weighty = 0.0
+		})
+
+		add(JPanel().apply {
+			layout = BorderLayout()
+			border = EmptyBorder(0, 5, 5, 5)
+			add(logTxtAreaScrlPn, BorderLayout.CENTER)
+		}, GridBagConstraints().apply {
+			gridy = 4
+			gridx = 0
+			gridwidth = 3
+			fill = GridBagConstraints.BOTH
+			weightx = 1.0
+			weighty = 1.0
+		})
+	}
 }
 
