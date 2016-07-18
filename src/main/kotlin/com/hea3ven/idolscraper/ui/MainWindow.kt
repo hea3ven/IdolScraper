@@ -1,12 +1,14 @@
 package com.hea3ven.idolscraper.ui
 
 import com.hea3ven.idolscraper.Config
+import com.hea3ven.idolscraper.getSaveStrategy
 import com.hea3ven.idolscraper.imageenhancer.ImageEnhancerManager
+import com.hea3ven.idolscraper.page.ScrapingTask
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.awt.*
 import java.awt.event.ActionEvent
-import java.awt.image.BufferedImage
+import java.io.BufferedInputStream
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.net.MalformedURLException
@@ -53,7 +55,7 @@ class MainWindow : JFrame("Idol Scraper") {
 
 		val formatLbl = JLabel("Format:")
 		formatLbl.border = EmptyBorder(0, 5, 0, 0)
-		val formatCb = JComboBox(arrayOf("png", "jpg"))
+		val formatCb = JComboBox(arrayOf("original", "png", "jpg"))
 		formatCb.preferredSize = Dimension(100, 22)
 		formatCb.border = EmptyBorder(2, 2, 2, 5)
 		formatCb.selectedItem = Config.getFormat()
@@ -73,24 +75,14 @@ class MainWindow : JFrame("Idol Scraper") {
 		scanBtn.action = object : AbstractAction() {
 
 			override fun actionPerformed(e: ActionEvent?) {
-				val destDir = Paths.get(destTxt.text)
-				if (destTxt.text.length == 0 || !Files.exists(destDir) || !Files.isDirectory(destDir)) {
+				val destDir1 = Paths.get(destTxt.text)
+				if (destTxt.text.length == 0 || !Files.exists(destDir1) || !Files.isDirectory(destDir1)) {
 					logTxtArea.text += "Invalid destination directory"
 					return
 				}
 
-				val format = formatCb.selectedItem as String
+				val task = ScrapingTask(destDir1, getSaveStrategy(formatCb.selectedItem as String))
 
-				var nextFileNo: Int = 0
-				Files.newDirectoryStream(destDir).use {
-					nextFileNo = it.filter { Files.isRegularFile(it) }
-							.map { it.fileName?.toString() }
-							.filterNotNull()
-							.map { it.replace(Regex("\\.[^.]*$"), "").trimStart('0') }
-							.filter { it.length > 0 && it.all(Char::isDigit) }
-							.map { it.toInt() }
-							.max()?.plus(1) ?: 0
-				}
 				val worker = object : SwingWorker<Any, String>() {
 					override fun doInBackground() {
 						try {
@@ -128,26 +120,28 @@ class MainWindow : JFrame("Idol Scraper") {
 							return
 						}
 						publish("Downloading image " + url)
-						val img: BufferedImage?
 						try {
-							img = ImageIO.read(url)
-							if (img == null) {
-								publish("        Error: unable to download")
-								return
+							val conn = url.openConnection()
+							BufferedInputStream(conn.inputStream).use { stream ->
+								stream.mark(Int.MAX_VALUE)
+								val img = ImageIO.read(stream)
+								if (img == null) {
+									publish("        Error: unable to download")
+									return
+								}
+								stream.reset()
+								publish("        Size " + img.width + "x" + img.height)
+
+								if (img.width < 800 || img.height < 800) {
+									publish("        Too small, not saving")
+									return
+								}
+								task.saveStrategy.save(task, conn, img, stream)
 							}
 						} catch(e: Exception) {
 							publish("        Error: " + e.toString())
 							return
 						}
-						publish("        Size " + img.width + "x" + img.height)
-
-						if (img.width < 1000 && img.height < 800) {
-							publish("        Too small, not saving")
-							return
-						}
-						val fileName = (nextFileNo++).toString().padStart(3, '0') + "." + format
-						ImageIO.write(img, format, destDir.resolve(fileName).toFile())
-						publish("        Saved as " + fileName)
 					}
 
 					override fun process(chunks: MutableList<String>) {
@@ -167,6 +161,7 @@ class MainWindow : JFrame("Idol Scraper") {
 				scanBtn.isEnabled = false
 				worker.execute()
 			}
+
 		}
 		scanBtn.text = "Scan"
 
