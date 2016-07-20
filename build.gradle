@@ -6,16 +6,16 @@ buildscript {
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.github.rholder:gradle-one-jar:1.0.4'
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'kotlin'
-apply plugin: 'application'
+apply plugin: 'gradle-one-jar'
 
 group 'com.hea3ven.idolscraper'
 version '1.0.1'
-mainClassName = 'com.hea3ven.idolscraper.ui.MainKt'
 
 repositories {
     mavenCentral()
@@ -26,6 +26,10 @@ dependencies {
     compile 'org.jsoup:jsoup:1.9.2'
 }
 
-sourceSets {
-    main.java.srcDirs += 'src/main/kotlin'
+
+task releaseJar(type: OneJar) {
+	mainClass = 'com.hea3ven.idolscraper.ui.MainKt'
+	archiveName = "IdolScraper ${version}.jar"
 }
+
+assemble.dependsOn(releaseJar)
