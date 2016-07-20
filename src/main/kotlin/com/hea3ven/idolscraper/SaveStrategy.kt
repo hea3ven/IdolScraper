@@ -8,7 +8,8 @@ import java.nio.file.Files
 import javax.imageio.ImageIO
 import javax.management.openmbean.InvalidKeyException
 
-val strategies = mapOf<String, SaveStrategy>("original" to PreserveOriginalSaveStrategy(),
+val strategies = mapOf(
+		"original" to PreserveOriginalSaveStrategy(),
 		"png" to ConvertFormatSaveStrategy("png"),
 		"jpg" to ConvertFormatSaveStrategy("jpg"))
 
@@ -25,6 +26,10 @@ interface SaveStrategy {
 class PreserveOriginalSaveStrategy : SaveStrategy {
 	override fun save(task: ScrapingTask, conn: URLConnection, img: BufferedImage,
 			stream: BufferedInputStream) {
+		save(task, conn, stream)
+	}
+
+	fun save(task: ScrapingTask, conn: URLConnection, stream: BufferedInputStream) {
 		synchronized(fileNumberLock) {
 			val format = when (conn.contentType) {
 				"image/jpg", "image/jpeg", "image/pjpeg" -> "jpg"

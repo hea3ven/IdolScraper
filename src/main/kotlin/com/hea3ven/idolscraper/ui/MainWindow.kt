@@ -1,11 +1,10 @@
 package com.hea3ven.idolscraper.ui
 
 import com.hea3ven.idolscraper.Config
+import com.hea3ven.idolscraper.PreserveOriginalSaveStrategy
 import com.hea3ven.idolscraper.getSaveStrategy
-import com.hea3ven.idolscraper.imageenhancer.ImageEnhancerManager
 import com.hea3ven.idolscraper.page.ScrapingTask
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
+import com.hea3ven.idolscraper.page.getPageHandler
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.io.BufferedInputStream
@@ -20,7 +19,6 @@ import javax.swing.*
 import javax.swing.border.EmptyBorder
 
 class MainWindow : JFrame("Idol Scraper") {
-	private val imgEnhancerMgr = ImageEnhancerManager()
 
 	private val dirChooser = JFileChooser().apply {
 		dialogTitle = "Target destination"
@@ -85,27 +83,18 @@ class MainWindow : JFrame("Idol Scraper") {
 
 				val worker = object : SwingWorker<Any, String>() {
 					override fun doInBackground() {
+						task.log = { publish(it) }
+						val pageHandler = getPageHandler(urlTxt.text)
+						pageHandler.handle(task, urlTxt.text)
 						try {
-							publish("Downloading the page")
-							val doc: Document
-							try {
-								doc = Jsoup.connect(urlTxt.text).get()
-							} catch (e: IllegalArgumentException) {
-								publish("Invalid url")
-								return
+							task.images.forEach {
+								downloadImage(it)
 							}
-							doc.select("img")
-									.map { it.attr("src") }
-									.filter { it != null && it.trim().length > 0 }
-									.map { imgEnhancerMgr.enhance(it) }
-									.forEach {
-										downloadImage(it)
-									}
-							publish("Done")
+							task.log("Done")
 						} catch(e: Exception) {
 							val ss = StringWriter()
 							e.printStackTrace(PrintWriter(ss))
-							publish("Unknown error: " + ss.toString())
+							task.log("Unknown error: " + ss.toString())
 						}
 						return
 					}
@@ -116,30 +105,34 @@ class MainWindow : JFrame("Idol Scraper") {
 						try {
 							url = URL(urlString)
 						} catch(e: MalformedURLException) {
-							publish("Bad url " + urlString)
+							task.log("Bad url " + urlString)
 							return
 						}
-						publish("Downloading image " + url)
+						task.log("Downloading image " + url)
 						try {
 							val conn = url.openConnection()
 							BufferedInputStream(conn.inputStream).use { stream ->
-								stream.mark(Int.MAX_VALUE)
-								val img = ImageIO.read(stream)
-								if (img == null) {
-									publish("        Error: unable to download")
-									return
-								}
-								stream.reset()
-								publish("        Size " + img.width + "x" + img.height)
+								if(conn.contentType == "video/mp4"){
+									PreserveOriginalSaveStrategy().save(task, conn, stream)
+								}else {
+									stream.mark(Int.MAX_VALUE)
+									val img = ImageIO.read(stream)
+									if (img == null) {
+										task.log("        Error: unable to download")
+										return
+									}
+									stream.reset()
+									task.log("        Size " + img.width + "x" + img.height)
 
-								if (img.width < 800 || img.height < 800) {
-									publish("        Too small, not saving")
-									return
+									if (img.width < 800 || img.height < 800) {
+										task.log("        Too small, not saving")
+										return
+									}
+									task.saveStrategy.save(task, conn, img, stream)
 								}
-								task.saveStrategy.save(task, conn, img, stream)
 							}
 						} catch(e: Exception) {
-							publish("        Error: " + e.toString())
+							task.log("        Error: " + e.toString())
 							return
 						}
 					}

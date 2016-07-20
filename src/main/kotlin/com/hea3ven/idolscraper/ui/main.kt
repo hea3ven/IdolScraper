@@ -7,7 +7,7 @@ import javax.swing.UnsupportedLookAndFeelException
 
 fun main(args: Array<String>) {
 	try {
-		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
 	} catch (e: UnsupportedLookAndFeelException) {
 	} catch (e: ClassNotFoundException) {
 	} catch (e: InstantiationException) {
