@@ -8,6 +8,7 @@ import com.hea3ven.idolscraper.page.getPageHandler
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.io.BufferedInputStream
+import java.io.InputStream
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.net.MalformedURLException
@@ -112,29 +113,45 @@ class MainWindow : JFrame("Idol Scraper") {
 						try {
 							val conn = url.openConnection()
 							BufferedInputStream(conn.inputStream).use { stream ->
-								if(conn.contentType == "video/mp4"){
+								if (conn.contentType == "video/mp4") {
 									PreserveOriginalSaveStrategy().save(task, conn, stream)
-								}else {
+								} else {
 									stream.mark(Int.MAX_VALUE)
-									val img = ImageIO.read(stream)
-									if (img == null) {
+									val size = getImageSize(stream)
+									if (size == null) {
 										task.log("        Error: unable to download")
 										return
 									}
 									stream.reset()
-									task.log("        Size " + img.width + "x" + img.height)
+									task.log("        Size " + size.first + "x" + size.second)
 
-									if (img.width < 800 || img.height < 800) {
+									if (size.first < 800 || size.second < 800) {
 										task.log("        Too small, not saving")
 										return
 									}
-									task.saveStrategy.save(task, conn, img, stream)
+									task.saveStrategy.save(task, conn, stream)
 								}
 							}
 						} catch(e: Exception) {
 							task.log("        Error: " + e.toString())
 							return
 						}
+					}
+
+					private fun getImageSize(stream: InputStream): Pair<Int, Int>? {
+						ImageIO.createImageInputStream(stream).use {
+							val readers = ImageIO.getImageReaders(it)
+							if (readers.hasNext()) {
+								val reader = readers.next()
+								try {
+									reader.input = it
+									return reader.getWidth(0) to reader.getHeight(0)
+								} finally {
+									reader.dispose()
+								}
+							}
+						}
+						return null
 					}
 
 					override fun process(chunks: MutableList<String>) {

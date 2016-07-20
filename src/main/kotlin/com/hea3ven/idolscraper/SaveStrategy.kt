@@ -1,7 +1,6 @@
 package com.hea3ven.idolscraper
 
 import com.hea3ven.idolscraper.page.ScrapingTask
-import java.awt.image.BufferedImage
 import java.io.BufferedInputStream
 import java.net.URLConnection
 import java.nio.file.Files
@@ -20,16 +19,11 @@ fun getSaveStrategy(name: String): SaveStrategy {
 }
 
 interface SaveStrategy {
-	fun save(task: ScrapingTask, conn: URLConnection, img: BufferedImage, stream: BufferedInputStream)
+	fun save(task: ScrapingTask, conn: URLConnection, stream: BufferedInputStream)
 }
 
 class PreserveOriginalSaveStrategy : SaveStrategy {
-	override fun save(task: ScrapingTask, conn: URLConnection, img: BufferedImage,
-			stream: BufferedInputStream) {
-		save(task, conn, stream)
-	}
-
-	fun save(task: ScrapingTask, conn: URLConnection, stream: BufferedInputStream) {
+	override fun save(task: ScrapingTask, conn: URLConnection, stream: BufferedInputStream) {
 		synchronized(fileNumberLock) {
 			val format = when (conn.contentType) {
 				"image/jpg", "image/jpeg", "image/pjpeg" -> "jpg"
@@ -44,19 +38,19 @@ class PreserveOriginalSaveStrategy : SaveStrategy {
 			val nextFileNo = getNextFileNumber(task.destDir)
 			val fileName = nextFileNo.toString().padStart(3, '0') + "." + format
 			Files.copy(stream, task.destDir.resolve(fileName))
-//			publish("        Saved as " + fileName)
+			task.log("        Saved as " + fileName)
 		}
 	}
 }
 
 class ConvertFormatSaveStrategy(val format: String) : SaveStrategy {
-	override fun save(task: ScrapingTask, conn: URLConnection, img: BufferedImage,
-			stream: BufferedInputStream) {
+	override fun save(task: ScrapingTask, conn: URLConnection, stream: BufferedInputStream) {
 		synchronized(fileNumberLock) {
 			val nextFileNo = getNextFileNumber(task.destDir)
 			val fileName = nextFileNo.toString().padStart(3, '0') + "." + format
+			val img = ImageIO.read(stream)
 			ImageIO.write(img, format, task.destDir.resolve(fileName).toFile())
-//			publish("        Saved as " + fileName)
+			task.log("        Saved as " + fileName)
 		}
 	}
 }
