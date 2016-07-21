@@ -125,7 +125,8 @@ class MainWindow : JFrame("Idol Scraper") {
 									stream.reset()
 									task.log("        Size " + size.first + "x" + size.second)
 
-									if (size.first < 800 || size.second < 800) {
+									if ((size.first < 800 || size.second < 800)
+											&& (size.first * size.second < 600 * 600)) {
 										task.log("        Too small, not saving")
 										return
 									}

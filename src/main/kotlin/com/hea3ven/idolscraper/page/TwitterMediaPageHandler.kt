@@ -28,25 +28,20 @@ class TwitterMediaPageHandler : PageHandler {
 		}
 
 		val status = twitter.tweets().showStatus(match.groupValues[1].toLong())
-		var hasVideo = false
 		status.extendedMediaEntities.forEach {
 			when (it.type) {
 				"animated_gif" -> {
 					task.addImage(it.videoVariants[0].url)
-					hasVideo = true
 				}
 				"video" -> {
 					val videoUrl = it.videoVariants.filter { it.contentType == "video/mp4" }.maxBy { it.bitrate }?.url
 					if (videoUrl != null) {
 						task.addImage(videoUrl)
-						hasVideo = true
 					}
 				}
-			}
-		}
-		if (!hasVideo) {
-			status.mediaEntities.forEach {
-				task.addImage(it.mediaURL)
+				"photo" -> {
+					task.addImage(it.mediaURL)
+				}
 			}
 		}
 		// TODO: get vine from status.urlEntities
