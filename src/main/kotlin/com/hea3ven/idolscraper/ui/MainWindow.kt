@@ -7,10 +7,7 @@ import com.hea3ven.idolscraper.page.ScrapingTask
 import com.hea3ven.idolscraper.page.getPageHandler
 import java.awt.*
 import java.awt.event.ActionEvent
-import java.io.BufferedInputStream
-import java.io.InputStream
-import java.io.PrintWriter
-import java.io.StringWriter
+import java.io.*
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Files
@@ -25,7 +22,7 @@ class MainWindow : JFrame("Idol Scraper") {
 		dialogTitle = "Target destination"
 		fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
 		isAcceptAllFileFilterUsed = false
-		currentDirectory = Config.getDestinationDir()
+		selectedFile = Config.getDestinationDir()
 	}
 
 	init {
