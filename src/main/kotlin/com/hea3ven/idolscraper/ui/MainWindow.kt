@@ -7,6 +7,8 @@ import com.hea3ven.idolscraper.page.ScrapingTask
 import com.hea3ven.idolscraper.page.getPageHandler
 import java.awt.*
 import java.awt.event.ActionEvent
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
 import java.io.*
 import java.net.MalformedURLException
 import java.net.URL
@@ -34,10 +36,26 @@ class MainWindow : JFrame("Idol Scraper") {
 		val urlLbl = JLabel("URL:")
 		urlLbl.border = EmptyBorder(0, 5, 0, 0)
 		val urlTxt = JTextField()
+		urlTxt.addFocusListener(object : FocusListener {
+			override fun focusLost(e: FocusEvent?) {
+			}
+
+			override fun focusGained(e: FocusEvent?) {
+				urlTxt.select(0, urlTxt.text.length)
+			}
+		})
 
 		val destLbl = JLabel("Destination:")
 		destLbl.border = EmptyBorder(0, 5, 0, 0)
 		val destTxt = JTextField(Config.getDestinationDir()?.absolutePath ?: "")
+		destTxt.addFocusListener(object : FocusListener {
+			override fun focusLost(e: FocusEvent?) {
+			}
+
+			override fun focusGained(e: FocusEvent?) {
+				destTxt.select(0, destTxt.text.length)
+			}
+		})
 		val destBtn = JButton()
 		destBtn.action = object : AbstractAction() {
 			override fun actionPerformed(e: ActionEvent?) {
