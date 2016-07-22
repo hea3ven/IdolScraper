@@ -20,11 +20,20 @@ object Config {
 	}
 
 	fun getFormat(): String? {
-		val format = prefs.get("format", "png")
+		val format = prefs.get("format", "original")
 		return if (format != "") format else null
 	}
 
 	fun setFormat(format: String?) {
+		prefs.put("format", format ?: "")
+	}
+
+	fun getFileNameFormat(): String? {
+		val format = prefs.get("format", "original")
+		return if (format != "") format else null
+	}
+
+	fun setFileNameFormat(format: String?) {
 		prefs.put("format", format ?: "")
 	}
 }

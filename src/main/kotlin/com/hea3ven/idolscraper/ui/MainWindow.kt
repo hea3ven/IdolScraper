@@ -2,6 +2,7 @@ package com.hea3ven.idolscraper.ui
 
 import com.hea3ven.idolscraper.Config
 import com.hea3ven.idolscraper.PreserveOriginalSaveStrategy
+import com.hea3ven.idolscraper.getFileNameStrategy
 import com.hea3ven.idolscraper.getSaveStrategy
 import com.hea3ven.idolscraper.page.ScrapingTask
 import com.hea3ven.idolscraper.page.getPageHandler
@@ -70,12 +71,24 @@ class MainWindow : JFrame("Idol Scraper") {
 		val formatLbl = JLabel("Format:")
 		formatLbl.border = EmptyBorder(0, 5, 0, 0)
 		val formatCb = JComboBox(arrayOf("original", "png", "jpg"))
-		formatCb.preferredSize = Dimension(100, 22)
+		formatCb.preferredSize = Dimension(100, 25)
 		formatCb.border = EmptyBorder(2, 2, 2, 5)
 		formatCb.selectedItem = Config.getFormat()
 		formatCb.action = object : AbstractAction() {
 			override fun actionPerformed(e: ActionEvent?) {
 				Config.setFormat(formatCb.selectedItem as String?)
+			}
+		}
+
+		val fileNameLbl = JLabel("File Name:")
+		fileNameLbl.border = EmptyBorder(0, 5, 0, 0)
+		val fileNameCb = JComboBox(arrayOf("original", "numbered"))
+		fileNameCb.preferredSize = Dimension(100, 25)
+		fileNameCb.border = EmptyBorder(2, 2, 2, 5)
+		fileNameCb.selectedItem = Config.getFileNameFormat()
+		fileNameCb.action = object : AbstractAction() {
+			override fun actionPerformed(e: ActionEvent?) {
+				Config.setFileNameFormat(fileNameCb.selectedItem as String?)
 			}
 		}
 
@@ -95,7 +108,10 @@ class MainWindow : JFrame("Idol Scraper") {
 					return
 				}
 
-				val task = ScrapingTask(destDir1, getSaveStrategy(formatCb.selectedItem as String))
+				val fileNameStgy = fileNameCb.selectedItem as String
+				val formatStgy = formatCb.selectedItem as String
+				val task = ScrapingTask(destDir1, getSaveStrategy(formatStgy),
+						getFileNameStrategy(fileNameStgy))
 
 				val worker = object : SwingWorker<Any, String>() {
 					override fun doInBackground() {
@@ -235,18 +251,15 @@ class MainWindow : JFrame("Idol Scraper") {
 			weightx = 1.0
 			weighty = 0.0
 		})
-		add(formatLbl, GridBagConstraints().apply {
-			gridy = 2
-			fill = GridBagConstraints.HORIZONTAL
-			weightx = 0.0
-			weighty = 0.0
-		})
 		add(JPanel().apply {
 			layout = FlowLayout(FlowLayout.LEFT, 0, 0)
+			add(formatLbl)
 			add(formatCb)
+			add(fileNameLbl)
+			add(fileNameCb)
 		}, GridBagConstraints().apply {
 			gridy = 2
-			gridx = 1
+			gridwidth = 2
 			fill = GridBagConstraints.HORIZONTAL
 			weightx = 0.0
 			weighty = 0.0
