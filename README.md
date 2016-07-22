@@ -6,4 +6,4 @@ Easily download all the images on a web page.
 
 ### Installation
 
-Extract the zip and run the 'idolscraper.bat' in the bin directory.
+Just double click the jar file or run `java -jar "IdolScraper <version>.jar"`.
