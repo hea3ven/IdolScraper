@@ -3,7 +3,7 @@ package com.hea3ven.idolscraper.page
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
-class ScrapeImgPageHandler : PageHandler {
+open class ScrapeImgPageHandler : PageHandler {
 	override fun canHandle(url: String) = true
 	override fun handle(task: ScrapingTask, url: String) {
 		task.log("Downloading the page")
