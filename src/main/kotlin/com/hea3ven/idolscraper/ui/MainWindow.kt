@@ -11,6 +11,7 @@ import java.awt.event.ActionEvent
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.io.*
+import java.net.IDN
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Files
@@ -116,8 +117,16 @@ class MainWindow : JFrame("Idol Scraper") {
 				val worker = object : SwingWorker<Any, String>() {
 					override fun doInBackground() {
 						task.log = { publish(it) }
-						val pageHandler = getPageHandler(urlTxt.text)
-						pageHandler.handle(task, urlTxt.text)
+						var url: URL
+						try {
+							url = URL(urlTxt.text)
+							url = URL(url.protocol, IDN.toASCII(url.host), url.port, url.file)
+						} catch(e: MalformedURLException) {
+							task.log("Invalid url")
+							return
+						}
+						val pageHandler = getPageHandler(url.toString())
+						pageHandler.handle(task, url.toString())
 						try {
 							task.images.forEach {
 								downloadImage(it)

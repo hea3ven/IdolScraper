@@ -13,6 +13,9 @@ open class ScrapeImgPageHandler : PageHandler {
 		} catch (e: IllegalArgumentException) {
 			task.log("Invalid url")
 			return
+		} catch (e: Exception) {
+			task.log("Unknown error: " + e)
+			return
 		}
 		return doc.select("img")
 				.map { it.attr("src") }
