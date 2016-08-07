@@ -17,7 +17,11 @@ open class ScrapeImgPageHandler : PageHandler {
 			task.log("Unknown error: " + e)
 			return
 		}
-		return doc.select("img")
+		return getImages(doc, task)
+	}
+
+	protected open fun getImages(doc: Document, task: ScrapingTask) {
+		doc.select("img")
 				.map { it.attr("src") }
 				.filter { it != null && it.trim().length > 0 }
 				.forEach {

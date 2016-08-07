@@ -10,7 +10,10 @@ import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
-import java.io.*
+import java.io.BufferedInputStream
+import java.io.InputStream
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.net.IDN
 import java.net.MalformedURLException
 import java.net.URL
@@ -117,16 +120,15 @@ class MainWindow : JFrame("Idol Scraper") {
 				val worker = object : SwingWorker<Any, String>() {
 					override fun doInBackground() {
 						task.log = { publish(it) }
-						var url: URL
 						try {
-							url = URL(urlTxt.text)
-							url = URL(url.protocol, IDN.toASCII(url.host), url.port, url.file)
+							val url = URL(urlTxt.text)
+							task.url = URL(url.protocol, IDN.toASCII(url.host), url.port, url.file)
 						} catch(e: MalformedURLException) {
 							task.log("Invalid url")
 							return
 						}
-						val pageHandler = getPageHandler(url.toString())
-						pageHandler.handle(task, url.toString())
+						val pageHandler = getPageHandler(task.url.toString())
+						pageHandler.handle(task, task.url.toString())
 						try {
 							task.images.forEach {
 								downloadImage(it)
@@ -144,7 +146,7 @@ class MainWindow : JFrame("Idol Scraper") {
 
 						val url: URL
 						try {
-							url = URL(urlString)
+							url = URL(task.url, urlString)
 						} catch(e: MalformedURLException) {
 							task.log("Bad url " + urlString)
 							return

@@ -3,6 +3,7 @@ package com.hea3ven.idolscraper.page
 val handlers = arrayOf(
 		TwitterMediaPageHandler(),
 		SeniroPageHandler(),
+		DispatchPageHandler(),
 		ScrapeImgPageHandler())
 
 fun getPageHandler(url: String): PageHandler {
