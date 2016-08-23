@@ -1,12 +1,13 @@
 package com.hea3ven.idolscraper.page
 
+import java.net.URL
+
 val handlers = arrayOf(
 		TwitterMediaPageHandler(),
-		SeniroPageHandler(),
 		DispatchPageHandler(),
 		ScrapeImgPageHandler())
 
-fun getPageHandler(url: String): PageHandler {
+fun getPageHandler(url: URL): PageHandler {
 	for (handler in handlers)
 		if (handler.canHandle(url))
 			return handler
@@ -14,6 +15,6 @@ fun getPageHandler(url: String): PageHandler {
 }
 
 interface PageHandler {
-	fun canHandle(url: String): Boolean
-	fun handle(task: ScrapingTask, url: String)
+	fun canHandle(url: URL): Boolean
+	fun handle(task: ScrapingTask, url: URL)
 }

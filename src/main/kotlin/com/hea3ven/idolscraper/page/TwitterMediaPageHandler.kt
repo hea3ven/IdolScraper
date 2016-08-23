@@ -2,16 +2,17 @@ package com.hea3ven.idolscraper.page
 
 import twitter4j.TwitterFactory
 import twitter4j.auth.AccessToken
+import java.net.URL
 
 class TwitterMediaPageHandler : PageHandler {
 	val urlRegex = Regex("https?://twitter.com/[^/]*/status/([^/]*)")
 	var twitterConfigured = false
 
-	override fun canHandle(url: String): Boolean {
-		return url.matches(urlRegex)
+	override fun canHandle(url: URL): Boolean {
+		return url.toString().matches(urlRegex)
 	}
 
-	override fun handle(task: ScrapingTask, url: String) {
+	override fun handle(task: ScrapingTask, url: URL) {
 		task.log("Connecting with twitter")
 		val twitter = TwitterFactory.getSingleton()
 		if (!twitterConfigured) {
@@ -21,7 +22,7 @@ class TwitterMediaPageHandler : PageHandler {
 					"rE8rAFCn9BmB9cu5Lruzdfupf9xGYBPpEJSIYounSI")
 		}
 
-		val match = urlRegex.matchEntire(url)
+		val match = urlRegex.matchEntire(url.toString())
 		if (match == null) {
 			task.log("Could not get tweet id from url")
 			return

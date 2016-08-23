@@ -127,8 +127,8 @@ class MainWindow : JFrame("Idol Scraper") {
 							task.log("Invalid url")
 							return
 						}
-						val pageHandler = getPageHandler(task.url.toString())
-						pageHandler.handle(task, task.url.toString())
+						val pageHandler = getPageHandler(task.url)
+						pageHandler.handle(task, task.url)
 						try {
 							task.images.forEach {
 								downloadImage(it)

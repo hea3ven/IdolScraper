@@ -2,22 +2,28 @@ package com.hea3ven.idolscraper.page
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.net.URL
 
 open class ScrapeImgPageHandler : PageHandler {
-	override fun canHandle(url: String) = true
-	override fun handle(task: ScrapingTask, url: String) {
+	override fun canHandle(url: URL) = true
+	override fun handle(task: ScrapingTask, url: URL) {
 		task.log("Downloading the page")
 		val doc: Document
 		try {
-			doc = Jsoup.connect(url).get()
+			doc = Jsoup.connect(url.toString()).get()!!
 		} catch (e: IllegalArgumentException) {
 			task.log("Invalid url")
 			return
 		} catch (e: Exception) {
-			task.log("Unknown error: " + e)
+			val ss = StringWriter()
+			e.printStackTrace(PrintWriter(ss))
+			task.log("Unknown error: " + ss.buffer.toString())
 			return
 		}
-		return getImages(doc, task)
+		getImages(doc, task)
+		getFrames(url, doc, task)
 	}
 
 	protected open fun getImages(doc: Document, task: ScrapingTask) {
@@ -27,6 +33,14 @@ open class ScrapeImgPageHandler : PageHandler {
 				.forEach {
 					task.addImage(it)
 				}
+	}
+
+	private fun getFrames(url: URL, doc: Document, task: ScrapingTask) {
+		doc.select("frame").forEach {
+			val newUrl = URL(url, it.attr("src"))
+			val pageHandler = getPageHandler(newUrl)
+			pageHandler.handle(task, newUrl)
+		}
 	}
 
 }
