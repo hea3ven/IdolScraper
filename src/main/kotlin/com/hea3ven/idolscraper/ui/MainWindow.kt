@@ -151,7 +151,6 @@ class MainWindow : JFrame("Idol Scraper") {
 							task.log("Bad url " + urlString)
 							return
 						}
-						task.log("Downloading image " + url)
 						try {
 							val conn = url.openConnection()
 							BufferedInputStream(conn.inputStream).use { stream ->
@@ -165,6 +164,11 @@ class MainWindow : JFrame("Idol Scraper") {
 										return
 									}
 									stream.reset()
+									if (size.first < 300 || size.second < 300) {
+										// Ignore really small images
+										return
+									}
+									task.log("Downloading image " + url)
 									task.log("        Size " + size.first + "x" + size.second)
 
 									if ((size.first < 800 || size.second < 800)
